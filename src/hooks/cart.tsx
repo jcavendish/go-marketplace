@@ -43,30 +43,27 @@ const CartProvider: React.FC = ({ children }) => {
 
   const addToCart = useCallback(
     async (product: Omit<Product, 'quantity'>) => {
-      const foundIndex = products.findIndex(each => each.id === product.id);
+      const foundProduct = products.find(each => each.id === product.id);
 
       let state;
-      if (foundIndex < 0) {
+      if (!foundProduct) {
         state = [
           ...products,
           {
-            id: product.id,
-            title: product.title,
-            image_url: product.image_url,
-            price: product.price,
+            ...product,
             quantity: 1,
           },
         ];
       } else {
-        const newProduct = {
-          ...products[foundIndex],
-          quantity: products[foundIndex].quantity + 1,
-        };
-        state = [
-          ...products.slice(0, foundIndex),
-          newProduct,
-          ...products.slice(foundIndex + 1),
-        ];
+        state = products.map(prod => {
+          if (prod.id === product.id) {
+            return {
+              ...prod,
+              quantity: prod.quantity + 1,
+            };
+          }
+          return prod;
+        });
       }
 
       setProducts(state);
@@ -77,38 +74,38 @@ const CartProvider: React.FC = ({ children }) => {
 
   const increment = useCallback(
     async id => {
-      const foundIndex = products.findIndex(product => product.id === id);
-      const newProduct = {
-        ...products[foundIndex],
-        quantity: products[foundIndex].quantity + 1,
-      };
-      const state = [
-        ...products.slice(0, foundIndex),
-        newProduct,
-        ...products.slice(foundIndex + 1),
-      ];
+      const state = products.map(product => {
+        if (product.id === id) {
+          return {
+            ...product,
+            quantity: product.quantity + 1,
+          };
+        }
+        return product;
+      });
+
       setProducts(state);
 
-      await AsyncStorage.setItem('@GoMarketplace', JSON.stringify(state));
+      await AsyncStorage.setItem('@GoMarketplace', JSON.stringify(products));
     },
     [products],
   );
 
   const decrement = useCallback(
     async id => {
-      const foundIndex = products.findIndex(product => product.id === id);
+      const found = products.find(product => product.id === id);
       let state: Product[] = [];
-      if (products[foundIndex] && products[foundIndex].quantity > 1) {
-        const newProduct = {
-          ...products[foundIndex],
-          quantity: products[foundIndex].quantity - 1,
-        };
-        state = [
-          ...products.slice(0, foundIndex),
-          newProduct,
-          ...products.slice(foundIndex + 1),
-        ];
-      } else if (products[foundIndex] && products[foundIndex].quantity === 1) {
+      if (found && found.quantity > 1) {
+        state = products.map(product => {
+          if (product.id === id) {
+            return {
+              ...product,
+              quantity: product.quantity - 1,
+            };
+          }
+          return product;
+        });
+      } else if (found && found.quantity === 1) {
         state = products.filter(product => product.id !== id);
       }
       setProducts(state);
