@@ -68,6 +68,7 @@ const CartProvider: React.FC = ({ children }) => {
           ...products.slice(foundIndex + 1),
         ];
       }
+
       setProducts(state);
       await AsyncStorage.setItem('@GoMarketplace', JSON.stringify(state));
     },
